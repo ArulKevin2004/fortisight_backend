@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Maps exactly to the `users` table created by Python's SQLAlchemy
+model User {
+  id             Int              @id @default(autoincrement())
+  name           String?
+  is_blacklisted Boolean          @default(false)
+  embedding      String?
+
+  detections     DetectionEvent[]
+
+  @@map("users")
+}
+
+// New table exclusively managed by NestJS
+model Camera {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  rtspUrl     String           @unique
+  isActive    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  detections  DetectionEvent[]
+
+  @@map("cameras")
+}
+
+// New table linking detections logically
+model DetectionEvent {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime @default(now())
+  
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  
+  cameraId  Int?
+  camera    Camera?  @relation(fields: [cameraId], references: [id])
+
+  @@map("detection_events")
+}
